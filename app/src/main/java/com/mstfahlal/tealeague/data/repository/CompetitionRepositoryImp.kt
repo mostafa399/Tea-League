@@ -34,6 +34,16 @@ class CompetitionRepositoryImp @Inject constructor(
         }
     }
 
+    override suspend fun getFromLocal(): LocalCompetitions {
+        return try {
+            val localData = competitionLocalDataSource.CompetitionDao().getAll()
+            LocalCompetitions(localData ?: emptyList())
+        } catch (e: Exception) {
+            Log.e("Repository", "Error reading from local cache", e)
+            LocalCompetitions(emptyList())
+        }
+    }
+
     private suspend fun getRemoteAndCache(): Resource<DomainCompetitions> {
         return when (val remoteResult = getFromRemote()) {
             is Resource.Success -> {

@@ -9,6 +9,7 @@ import com.mstfahlal.tealeague.utils.Resource
 
 interface ICompetitionRepository {
     suspend fun getCompetition(forceRefresh: Boolean = false): Resource<DomainCompetitions>
+    suspend fun getFromLocal(): LocalCompetitions
     suspend fun getFromRemote(): Resource<RemoteCompetitions>
     suspend fun saveToLocal(data: List<LocalCompetition>)
 }

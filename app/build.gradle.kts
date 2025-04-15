@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     testImplementation(libs.junit)
+    testImplementation(libs.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -82,9 +83,9 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.material3.window.size)
     // Shared Elements Transition
-    implementation("com.mxalbert.sharedelements:shared-elements:0.1.0-SNAPSHOT")
-    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
-    // Collapsing Toolbar
-    implementation("me.onebone:toolbar-compose:2.3.5")
+    implementation(libs.shared.elements)
+    implementation(libs.accompanist.swiperefresh)
+    testImplementation (libs.mockk.android)
+    testImplementation (libs.mockk.agent)
 
 }

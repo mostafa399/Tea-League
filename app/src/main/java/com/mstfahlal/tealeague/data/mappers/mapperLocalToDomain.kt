@@ -34,6 +34,22 @@ fun List<LocalCompetition>.toDomainCompetition() : List<DomainCompetition> {
         )
     }
 }
+fun LocalCompetition.toDomainCompetition() : DomainCompetition {
+    return DomainCompetition(
+            area=area?.toDomainArea(),
+            code=code,
+            currentSeason =  currentSeason?.toDomainCurrentSeason(),
+            emblem = emblem,
+            id = id,
+            lastUpdated = lastUpdated,
+            name =  name,
+            numberOfAvailableSeasons = numberOfAvailableSeasons,
+            plan = plan,
+            type = type
+
+        )
+}
+
 
 fun LocalArea.toDomainArea()= DomainArea(
     code = code, flag = flag, id = id, name = name

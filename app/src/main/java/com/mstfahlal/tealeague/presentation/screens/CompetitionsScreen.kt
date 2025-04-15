@@ -17,15 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshState
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.mstfahlal.tealeague.domain.model.DomainCompetition
-import com.mstfahlal.tealeague.domain.model.DomainCompetitions
 import com.mstfahlal.tealeague.presentation.composables.CompetitionItem
 import com.mstfahlal.tealeague.presentation.composables.EmptyContent
 import com.mstfahlal.tealeague.presentation.viewmodel.CompetitionViewModel
@@ -39,9 +36,16 @@ fun CompetitionsScreen(
     onCompClick: (String) -> Unit
 ) {
     val competitions by viewModel.competitions.collectAsState()
+
+    val isInitialLoad = competitions is Resource.Unspecified
     val swipeRefreshState = rememberSwipeRefreshState(
-        isRefreshing = competitions is Resource.Loading && !viewModel.isInitialLoad
+        isRefreshing = competitions is Resource.Loading && !isInitialLoad
     )
+    LaunchedEffect(Unit) {
+        if (isInitialLoad) {
+            viewModel.loadCompetitions()
+        }
+    }
 
     CompetitionsScreenContent(
         comps = competitions.data?.competitions ?: emptyList(),

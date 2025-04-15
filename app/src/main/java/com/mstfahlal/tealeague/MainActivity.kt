@@ -71,14 +71,14 @@ fun AppNavigation(paddingValues: PaddingValues) {
             CompetitionsScreen(
                 viewModel = viewModel ,
                 onCompClick = { competitionId ->
-                        viewModel.setCompetitionSelected(it.id)
-                        navController.navigate("competitionDetails/$competitionId")
+                    viewModel.setCompetitionSelected(competitionId)
+                    navController.navigate("competitionDetails/$competitionId")
                 }
             )
         }
         composable("competitionDetails/{competitionId}") { backStackEntry ->
             val competitionId = backStackEntry.arguments?.getString("competitionId") ?: ""
-            CompetitionDetailsScreen(competitionId = competitionId)
+            CompetitionDetailsScreen(onBack = { navController.popBackStack() }, competitionId = competitionId)
         }
     }
 }

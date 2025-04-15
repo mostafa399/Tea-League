@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -60,7 +62,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CompetitionDetailsScreen(competitionId: String) {
+fun CompetitionDetailsScreen(onBack: () -> Unit, competitionId: String) {
     val viewModel: CompetitionViewModel = hiltViewModel()
     val competition by viewModel.selectedCompetition.collectAsState()
     LaunchedEffect(competitionId) {
@@ -78,7 +80,7 @@ fun CompetitionDetailsScreen(competitionId: String) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Handle back */ }) {
+                    IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -89,7 +91,8 @@ fun CompetitionDetailsScreen(competitionId: String) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Hero Image
                 competition?.emblem?.let { emblem ->
@@ -103,9 +106,9 @@ fun CompetitionDetailsScreen(competitionId: String) {
                         )
                     )  {
                         SubComposeAsyncImageCommon(
-                            modifier = Modifier.size(180.dp),
+                            modifier = Modifier.size(180.dp).align(Alignment.CenterHorizontally),
                             imageUri = emblem,
-                            shape = CircleShape,
+                            shape = MaterialTheme.shapes.medium,
                             contentDescription = "Competition emblem"
                         )
                     }
@@ -152,12 +155,12 @@ fun CompetitionDetailsScreen(competitionId: String) {
                                 InfoItem(
                                     title = "Country",
                                     value = competition?.area?.name ?: "N/A",
-                                    icon = Icons.Default.Info
+                                    icon = Icons.Outlined.Place
                                 )
                                 InfoItem(
                                     title = "Plan",
                                     value = competition?.plan ?: "N/A",
-                                    icon = Icons.Default.Star
+                                    icon = Icons.Outlined.Place
                                 )
                             }
                         }
@@ -190,12 +193,12 @@ fun CompetitionDetailsScreen(competitionId: String) {
                                     InfoItem(
                                         title = "Start Date",
                                         value = season.startDate ?: "N/A",
-                                        icon = Icons.Default.MoreVert
+                                        icon = Icons.Outlined.DateRange
                                     )
                                     InfoItem(
                                         title = "End Date",
                                         value = season.endDate ?: "N/A",
-                                        icon = Icons.Default.Build
+                                        icon = Icons.Outlined.DateRange
                                     )
                                 }
 
@@ -209,7 +212,7 @@ fun CompetitionDetailsScreen(competitionId: String) {
                                     InfoItem(
                                         title = "Current Matchday",
                                         value = season.currentMatchday?.toString() ?: "N/A",
-                                        icon = Icons.Default.Notifications
+                                        icon = Icons.Outlined.DateRange
                                     )
 
                                     // Winner info if available
