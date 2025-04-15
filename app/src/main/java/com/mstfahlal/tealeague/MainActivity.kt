@@ -59,17 +59,26 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(paddingValues: PaddingValues) {
     val navController = rememberNavController()
+    val viewModel: CompetitionViewModel = hiltViewModel()
 
-    NavHost(navController = navController, startDestination = "competitions",  modifier = Modifier.padding(paddingValues)) {
+
+    NavHost(
+        navController = navController,
+        startDestination = "competitions",
+        modifier = Modifier.padding(paddingValues)
+    ) {
         composable("competitions") {
-            CompetitionsScreen { competitionId ->
-                // Handle competition click - navigate to details screen
-                navController.navigate("competitionDetails/$competitionId")
-            }
+            CompetitionsScreen(
+                viewModel = viewModel ,
+                onCompClick = { competitionId ->
+                        viewModel.setCompetitionSelected(it.id)
+                        navController.navigate("competitionDetails/$competitionId")
+                }
+            )
         }
         composable("competitionDetails/{competitionId}") { backStackEntry ->
             val competitionId = backStackEntry.arguments?.getString("competitionId") ?: ""
-            CompetitionDetailsScreen(competitionId)
+            CompetitionDetailsScreen(competitionId = competitionId)
         }
     }
 }

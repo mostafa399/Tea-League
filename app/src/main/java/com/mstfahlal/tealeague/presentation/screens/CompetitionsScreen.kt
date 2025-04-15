@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -24,6 +25,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshState
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.mstfahlal.tealeague.domain.model.DomainCompetition
+import com.mstfahlal.tealeague.domain.model.DomainCompetitions
 import com.mstfahlal.tealeague.presentation.composables.CompetitionItem
 import com.mstfahlal.tealeague.presentation.composables.EmptyContent
 import com.mstfahlal.tealeague.presentation.viewmodel.CompetitionViewModel
@@ -36,24 +38,17 @@ fun CompetitionsScreen(
     viewModel: CompetitionViewModel = hiltViewModel(),
     onCompClick: (String) -> Unit
 ) {
-    val context = LocalContext.current
-    val competitionsState by viewModel.competitions.collectAsState()
-    val swipeRefreshState =
-        rememberSwipeRefreshState(isRefreshing = competitionsState is Resource.Loading)
-
-    LaunchedEffect(Unit) {
-        viewModel.fetchAllCompetitions(context)
-    }
+    val competitions by viewModel.competitions.collectAsState()
+    val swipeRefreshState = rememberSwipeRefreshState(
+        isRefreshing = competitions is Resource.Loading && !viewModel.isInitialLoad
+    )
 
     CompetitionsScreenContent(
-        comps = competitionsState.data?.competitions ?: emptyList(),
-        updateComps = { viewModel.fetchAllCompetitions(context) },
+        comps = competitions.data?.competitions ?: emptyList(),
+        isLoading = competitions is Resource.Loading,
+        onRefresh = { viewModel.refreshCompetitions() },
         swipeRefreshState = swipeRefreshState,
-        isLoading = competitionsState is Resource.Loading,
-        onCompClick = { id ->
-            viewModel.setCompetitionSelected(id)
-            onCompClick(id)
-        }
+        onCompClick = onCompClick
     )
 }
 
@@ -61,9 +56,9 @@ fun CompetitionsScreen(
 @Composable
 fun CompetitionsScreenContent(
     comps: List<DomainCompetition>,
-    updateComps: () -> Unit,
-    swipeRefreshState: SwipeRefreshState,
     isLoading: Boolean,
+    onRefresh: () -> Unit,
+    swipeRefreshState: SwipeRefreshState,
     onCompClick: (String) -> Unit
 ) {
     Scaffold(
@@ -79,7 +74,7 @@ fun CompetitionsScreenContent(
     ) { paddingValues ->
         SwipeRefresh(
             state = swipeRefreshState,
-            onRefresh = updateComps
+            onRefresh = onRefresh
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -87,29 +82,23 @@ fun CompetitionsScreenContent(
                     .padding(paddingValues),
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.small3)
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(MaterialTheme.dimens.small3))
-                }
+                item { Spacer(modifier = Modifier.height(MaterialTheme.dimens.small3)) }
 
                 when {
-
                     comps.isEmpty() -> {
-                        item {
-                            EmptyContent(
-                                onReloadClick = updateComps
-                            )
-                        }
+                        item { EmptyContent(onReloadClick = onRefresh) }
                     }
 
                     else -> {
                         items(items = comps, key = { it.id!! }) { comp ->
-                            CompetitionItem(competition = comp, onCompClick = onCompClick)
+                            CompetitionItem(
+                                competition = comp,
+                                onCompClick = onCompClick
+                            )
                         }
                     }
                 }
-                item {
-                    Spacer(modifier = Modifier.height(MaterialTheme.dimens.medium4))
-                }
+                item { Spacer(modifier = Modifier.height(MaterialTheme.dimens.medium4)) }
             }
         }
     }

@@ -9,8 +9,8 @@ import javax.inject.Inject
 class GetAllCompetition @Inject constructor(
     private val CompetitionsRepo : ICompetitionRepository,
 ):IGetAllCompetition {
-    override suspend fun getAllCompetitions(context: Context): Resource<DomainCompetitions> {
-        return CompetitionsRepo.getCompetition(context)
+    override suspend fun getAllCompetitions(): Resource<DomainCompetitions> {
+        return CompetitionsRepo.getCompetition()
     }
 
 }

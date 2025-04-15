@@ -8,8 +8,7 @@ import com.mstfahlal.tealeague.domain.model.DomainCompetitions
 import com.mstfahlal.tealeague.utils.Resource
 
 interface ICompetitionRepository {
-    suspend fun getCompetition(context: Context): Resource<DomainCompetitions>
-    suspend fun getFromLocal(): LocalCompetitions
+    suspend fun getCompetition(forceRefresh: Boolean = false): Resource<DomainCompetitions>
     suspend fun getFromRemote(): Resource<RemoteCompetitions>
-    suspend fun saveToLocal(data :List<LocalCompetition>)
+    suspend fun saveToLocal(data: List<LocalCompetition>)
 }

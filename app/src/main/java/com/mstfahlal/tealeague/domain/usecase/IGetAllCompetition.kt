@@ -5,6 +5,6 @@ import com.mstfahlal.tealeague.domain.model.DomainCompetitions
 import com.mstfahlal.tealeague.utils.Resource
 
 interface IGetAllCompetition {
-    suspend fun getAllCompetitions(context: Context): Resource<DomainCompetitions>
+    suspend fun getAllCompetitions(): Resource<DomainCompetitions>
 
 }

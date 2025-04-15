@@ -1,6 +1,7 @@
 package com.mstfahlal.tealeague.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.mstfahlal.tealeague.data.data_sources.local.AppDatabase
 import com.mstfahlal.tealeague.data.data_sources.local.LocalCompetition
 import com.mstfahlal.tealeague.data.data_sources.local.LocalCompetitions
@@ -11,66 +12,68 @@ import com.mstfahlal.tealeague.data.mappers.toLocalCompetition
 import com.mstfahlal.tealeague.domain.model.DomainCompetitions
 import com.mstfahlal.tealeague.domain.repository.ICompetitionRepository
 import com.mstfahlal.tealeague.utils.Resource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class CompetitionRepositoryImp @Inject constructor(
-    private val  competitionRemoteDataSource : ICompetitionRemoteData,
-    private val competitionLocalDataSource : AppDatabase,
-): ICompetitionRepository {
-    override suspend fun getCompetition(context: Context): Resource<DomainCompetitions> {
-        return if (connectivity(context)) {
-            val result = getOnlineCompetition()
-            if (result is Resource.Success) {
-                result
-            } else {
-                // fallback to local cache if online fetch failed
-                getOfflineCompetition()
+    private val competitionRemoteDataSource: ICompetitionRemoteData,
+    private val competitionLocalDataSource: AppDatabase
+) : ICompetitionRepository {
+    private var hasInitialRemoteLoad = false
+
+    override suspend fun getCompetition(forceRefresh: Boolean): Resource<DomainCompetitions> {
+        return if (forceRefresh || !hasInitialRemoteLoad) {
+            getRemoteAndCache().also {
+                if (it is Resource.Success) {
+                    hasInitialRemoteLoad = true
+                }
             }
         } else {
-            getOfflineCompetition()
+            getLocalData()
         }
     }
 
-    suspend fun getOnlineCompetition(): Resource<DomainCompetitions> {
-        val dataFromRemote = getFromRemote()
-        if (dataFromRemote.data?.competitions!=null){
-            saveToLocal(dataFromRemote.data.competitions.toLocalCompetition())
-            return Resource.Success(dataFromRemote.data.toDomainCompetitions())
-        }else {
-            return Resource.Error(" repoImp : ${dataFromRemote.message.toString()}")
-        }
-    }
-    private fun getOfflineCompetition():Resource<DomainCompetitions>{
-        val data = competitionLocalDataSource.CompetitionDao().getAll()
-        if (data!=null){
-            return Resource.Success(LocalCompetitions(data).toDomainCompetitions())
-        } else {
-            return Resource.Error("Database is empty!")
+    private suspend fun getRemoteAndCache(): Resource<DomainCompetitions> {
+        return when (val remoteResult = getFromRemote()) {
+            is Resource.Success -> {
+                remoteResult.data?.competitions?.let { remoteCompetitions ->
+                    saveToLocal(remoteCompetitions.toLocalCompetition())
+                    Resource.Success(remoteResult.data.toDomainCompetitions())
+                } ?: Resource.Error("No data available")
+            }
+            is Resource.Error -> getLocalData().also {
+                if (it is Resource.Error) return Resource.Error("Unknown error")
+            }
+            else -> Resource.Error("Unknown error")
         }
     }
 
-
-    override suspend fun getFromLocal(): LocalCompetitions {
-        val local = competitionLocalDataSource.CompetitionDao().getAll()
-        return LocalCompetitions(local)
+    private suspend fun getLocalData(): Resource<DomainCompetitions> {
+        return try {
+            val localData = competitionLocalDataSource.CompetitionDao().getAll()
+            if (localData?.isNotEmpty() == true) {
+                Resource.Success(LocalCompetitions(localData).toDomainCompetitions())
+            } else {
+                Resource.Error("No local data")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Local error: ${e.message}")
+        }
     }
 
     override suspend fun getFromRemote(): Resource<RemoteCompetitions> {
-        val dataFromRemote = competitionRemoteDataSource.getCompetition()
-        if (dataFromRemote.data == null){
-            return Resource.Error(dataFromRemote.message.toString())
-        } else {
-            return Resource.Success(dataFromRemote.data)
+        return try {
+            competitionRemoteDataSource.getCompetition()
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.message}")
         }
     }
 
     override suspend fun saveToLocal(data: List<LocalCompetition>) {
-        competitionLocalDataSource.CompetitionDao().insert(data)
-    }
-    @Suppress("DEPRECATION")
-    fun connectivity(context: Context):Boolean{
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-        val networkInfo = connectivityManager.activeNetworkInfo
-        return networkInfo != null && networkInfo.isConnected
+        withContext(Dispatchers.IO) {
+            competitionLocalDataSource.CompetitionDao().insert(data)
+
+        }
     }
 }
